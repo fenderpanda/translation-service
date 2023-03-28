@@ -1,0 +1,47 @@
+app:
+  kafka:
+    prepared:
+      destination: json.cool_translator.file.prepared
+
+server:
+  port: 8004
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/cool_translator?useSSL=false
+    username: translator
+    password: translator
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/SpringBootKeycloak
+  cloud:
+    function:
+      definition: onTranslationComplete;onRefundComplete;
+    stream:
+      kafka:
+        binder:
+          brokers: localhost
+          defaultBrokerPort: 9092
+          autoCreateTopics: false
+          consumerProperties:
+            allow.auto.create.topics: false
+      bindings:
+        onTranslationComplete-in-0:
+          destination: json.cool_translator.file.completed
+          group: completedGroup
+        onRefundComplete-in-0:
+          destination: json.cool_translator.translation_payment.refunded
+          group: refundedGroup
+        onRefundComplete-out-0:
+          destination: json.cool_translator.file.translation.failed
